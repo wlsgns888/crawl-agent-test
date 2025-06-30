@@ -1,3 +1,4 @@
+
 import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -6,7 +7,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from firecrawl import FirecrawlApp, ScrapeOptions # ScrapeOptions import 추가
+from firecrawl import FirecrawlApp, ScrapeOptions
 from langchain_core.documents import Document
 
 # .env 파일에서 환경 변수 로드
@@ -27,10 +28,12 @@ embeddings = OpenAIEmbeddings()
 # FirecrawlApp 인스턴스 생성
 firecrawl_app = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
 
-def get_musinsa_data(url: str, limit: int = 5):
+def get_langchain_docs_data(url: str, limit: int = 5):
     print(f"Crawling {url} with limit {limit}...")
     
     # ScrapeOptions 객체 생성 및 enableJavascript 설정
+    # Langchain 문서는 정적 페이지이므로 enableJavascript는 필요 없을 수 있지만, 
+    # 혹시 모를 경우를 대비하여 남겨둡니다.
     scrape_options = ScrapeOptions(enableJavascript=True)
     
     crawled_data_result = firecrawl_app.crawl_url(url, limit=limit, scrape_options=scrape_options)
@@ -89,20 +92,20 @@ def create_rag_chain(vector_store):
     return retrieval_chain
 
 if __name__ == "__main__":
-    musinsa_url = "https://www.musinsa.com/categories/item/001001" # 반팔 티셔츠 카테고리
+    langchain_docs_url = "https://python.langchain.com/"
     
     # 1. 정보 수집 (Crawl)
-    musinsa_docs = get_musinsa_data(musinsa_url, limit=3) # 3페이지 크롤링
+    langchain_docs = get_langchain_docs_data(langchain_docs_url, limit=3) # 3페이지 크롤링
     
     # 2. 색인 (Indexing)
-    vector_store = create_vector_store(musinsa_docs)
+    vector_store = create_vector_store(langchain_docs)
     
     # 3. 검색 및 답변 생성 (Retrieve & Generate)
     if vector_store:
         rag_chain = create_rag_chain(vector_store)
         
         # 테스트 쿼리
-        query = "무신사에서 요즘 인기 있는 반팔 티셔츠 상품 3가지만 추천해줘"
+        query = "Langchain은 무엇이며, 어떤 주요 구성 요소로 이루어져 있나요?"
         print(f"\nUser Query: {query}")
         
         try:
